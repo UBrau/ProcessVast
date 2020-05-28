@@ -1,11 +1,11 @@
 # ProcessVast
-Scripts and files to perform routine analyses of alternative splicing, based on vast-tools output
+Scripts and files to perform routine analyses of alternative splicing, based on `vast-tools` output (https://github.com/vastgroup/vast-tools)
 
 ## Summary
 This is a tool to make sense of vast-tools output by providing several standard analyses, including similarily of single samples, numbers of changing events between specified contrasts, correlation between multiple contrasts, and files of genes containing changing AS events for GO analysis, including specific backgrounds.
 
 ## Usage
-_ProcessVast.R -h_
+`ProcessVast.R -h`
 
 ## Input
 ### Required
