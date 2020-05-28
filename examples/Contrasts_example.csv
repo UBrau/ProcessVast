@@ -1,0 +1,4 @@
+"Experimental","Control","File"
+"treatment1","ctrl","DIFF_treatment1.ctrl.tab.gz"
+"treatment2","ctrl","DIFF_treatment2.ctrl.tab.gz"
+"treatment1","treatment2","DIFF_treatment1.treatment2.tab.gz"
