@@ -12,11 +12,11 @@ This is a tool to make sense of vast-tools output by providing several standard 
 Necessary to run are, a completed vast-tools analysis, including `diff` for every contrast that will be compared.
 - **INCLUSION... table** (primary vast-tools output)
 - **vast-tools _diff_ results tables**. It is recommended to run `diff` with default statistical options except increase --size to 2000.
-- **Sample table**: CSV file with (at least) columns _Sample_ and _Type_. _Sample_ must be identical to what is specified in the INCLUSION... table; all samples that are considered replicates have the same _Type_.
-- **Contrast table**: CSV file with (at least) columns _Experimental_, _Control_, and _File_. The former two contain entries from the sample table's _Type_ column that specify which sample types are compared (by subtraction of PSI/PIR). _File_ species the path and file name of the `vast-tools diff` output table for each contrast.
+- **Sample table**: CSV file with (at least) columns _Sample_ and _Type_. _Sample_ must be identical to what is specified in the INCLUSION... table; all samples that are considered replicates have the same _Type_. See examples.
+- **Contrast table**: CSV file with (at least) columns _Experimental_, _Control_, and _File_. The former two contain entries from the sample table's _Type_ column that specify which sample types are compared (by subtraction of PSI/PIR). _File_ species the path and file name of the `vast-tools diff` output table for each contrast. See examples.
 ### Optional
 - **Specific event table**: Tab-deliminted file containing information about known regulation of events. If present, a bar graph will be produced showing the overlap of the changing events in each contrast with known differential events. E.g. neural-differential splicing would be encoded as the entries 'neural-LOW' or 'neural-HIGH' while non-differential events are NA. Columns are _EVENT_ (matching vast-tools events) and any number of columns with descritive names (e.g., 'neural', 'ASD') and events containing xxx-HIGH/xxx-LOW.
-- **Lookup table for EVENT to GeneID**: If files for GO analysis should be produced, a tab-delimited file containing columns _EVENT_ and_EnsemblGeneID_ is required.
+- **Lookup table for EVENT to GeneID**: If files for GO analysis should be produced, a tab-delimited file containing columns _EVENT_ and_EnsemblGeneID_ is required. Files for Mm2, Hsa and Hs2 are available in the 'EVENTtoGeneID' folder.
 
 ## Functionality
 _ProcessVast.R_ will first perform filtering of raw PSI/PIR based on quality columns. Averages for each sample type are taken from `diff` outputs and averaged if a sample occurs in multiple ones. If more than half of the replicates in a type are NA for an event after filtering, the mean is set to NA.
