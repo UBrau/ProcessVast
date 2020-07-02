@@ -609,7 +609,7 @@ if (!opt$continue) {
     vastMain <- sort(dir(opt$vastDir, pattern="INCLUSION_LEVELS_FULL-[[:alnum:]]{4,6}(-[[:alnum:]]{3,4})?.tab.*",
                          full.names=T),
                      decreasing=T)[1]
-    if (is.na(vastMain)) {stop("vast-tools main table not found in ", vastDir)}
+    if (is.na(vastMain)) {stop("vast-tools main table not found in ", opt$vastDir)}
 } else {
     vastMain <- sort(dir(opt$outDir, pattern="INCLUSION_LEVELS_FULL-[[:alnum:]]{4,6}(-[[:alnum:]]{3,4})?_clean.*.tab.*",
                          full.names=T),
