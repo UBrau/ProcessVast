@@ -3,8 +3,9 @@
 ###
 ### U. Braunschweig 2019-2020
 ###
-### Changes:  - Handled errors during clustering
-###           - New option 'depth'
+### Changes:  Option 'depth' has been replaced with 'filter', with the default settings now allowing
+###           a quality score of OK/LOW/VLOW for CE/MIC depth and OK/B1/B2/Bl/Bn for balance, 
+###           and IR minimum reads of 10. This rescues ~10-20% of events compared to the previous default.
 
 cArgs <- commandArgs(TRUE)
 
@@ -34,8 +35,17 @@ opt.list <- list(
                 with at least columns EVENT and EnsemblGeneID"),
     make_option("--noGO",                   action="store_true", default="FALSE",
                 help="Do not save files for GO analysis."),
-    make_option(c("-d", "--depth"),         action="store", default="LOW", metavar="LOW|VLOW",
-                help="Read depth filtering for individual events and replicates. LOW=15, VLOW=10 reads [%default]"),
+    make_option(c("-m", "--minRepFrac"), action="store", default=0.5, metavar="REAL",
+                help="Minimum fraction of replicates of each type that needs to survive filtering [%default]"),
+    make_option(c("-f", "--filter"),        action="store", default="DEFAULT", metavar="DEFAULT|STRICT|LEGACY",
+                help="Read depth filtering and balance filtering for individual events and replicates.
+		DEFAULT: CE/MIC/Alt3/Alt5 depth must be SOK/OK/LOW/VLOW; CE balance OK/B1/B2/Bl/Bn; IR depth >= 10; 
+                         IR balance pval >= 0.05.
+                STRICT:  CE/MIC/Alt3/Alt5 depth must be SOK/OK/LOW; CE balance OK/B1/B2/Bl/Bn; IR depth >= 15; 
+                         IR balance pval >= 0.05.
+                LEGACY:  CE/MIC/Alt3/Alt5 depth must be SOK/OK/LOW; CE balance OK/B1; IR depth >= 15; IR balance pval >= 0.05.
+                         This is the same as the previous default setting.
+                [%default]"),
     make_option("--strictDiff",             action="store_true", default="FALSE",
                 help="If set, significant events will be those where |dPSI| (p>0.95) is greater than 10.
                 By default, significant events will be those where |dPSI| (p>0.95) is greater
@@ -77,12 +87,13 @@ saveLog <- function(logName, opt, sampleTab, contrTab) {
 ### Save a log file
     titl <- "*** Processing vast-tools results ***\n\n== Options =="
     if (opt$continue) {
-        selOpt <- which(names(opt) %in% c("sampleTab","contrTab","specEventTable","continue",
+        selOpt <- which(names(opt) %in% c("sampleTab","contrTab","vast2EnsemblGene","specEventTable","continue",
                                           "scatterForce","outDir","noGO")
                         )
     } else {
-        selOpt <- which(names(opt) %in% c("sampleTab","contrTab","specEventTable","continue",
-                                          "strictDiff","keepFullAlt","depth","scatterForce","vastDir","outDir","noGO")
+        selOpt <- which(names(opt) %in% c("sampleTab","contrTab","vast2EnsemblGene","specEventTable","continue",
+                                          "strictDiff","keepFullAlt","minRepFrac","filter",
+					  "scatterForce","vastDir","outDir","noGO")
                         )
     }
     optTable <- data.frame(option = names(opt)[selOpt],
@@ -243,12 +254,14 @@ altCombinePSI <- function(vast, dat) {
     type[out$COMPLEX %in% c("C1","C2","C3","S","ANN")] <- "CE"
     type[grep("IR", out$COMPLEX)] <- "IR"
     type[out$COMPLEX == "MIC"]  <- "MIC"
-    type[type == "CE" & out$LENGTH <= 27]  <- "MIC"
     type[out$COMPLEX == "Alt5"] <- "Alt5"
     type[out$COMPLEX == "Alt3"] <- "Alt3"
     type[is.na(out$COMPLEX) & grepl("EX[0-9]+", out$EVENT) & out$LENGTH >  27] <- "CE"  # some events have no COMPLEX
     type[is.na(out$COMPLEX) & grepl("EX[0-9]+", out$EVENT) & out$LENGTH <= 27] <- "MIC" #
+    type[type == "" & grepl("A_", out$COMPLEX)] <- "CE"
+    type[type == "CE" & out$LENGTH <= 27]  <- "MIC"
 
+    
     data.frame(out[,1:6],
                TYPE = type,
                out[,7:ncol(out)]
@@ -369,7 +382,7 @@ changingEventTypes <- function(dpsi, sig, info, includeANN=T, main=NA, percentag
         text(seq(1, 7 ,1.5),  0.05 * (ylim[2] - ylim[1]), change[1,,i])
         text(seq(1, 7 ,1.5), -0.05 * (ylim[2] - ylim[1]), change[2,,i])
         par(xpd=NA)
-        text(4, ylim[2] + 0.08 * (ylim[2] - ylim[1]) ,
+        text(4, ylim[2] + 0.06 * (ylim[2] - ylim[1]) ,
              paste(format(sum(allev[i,]), big.mark=","), "events with coverage"))
         par(xpd=F)
     }
@@ -603,13 +616,14 @@ if (!opt$noGO && is.null(opt$vast2EnsemblGene))   {
 if (!opt$noGO && !file.exists(opt$vast2EnsemblGene))   {
     stop(opt$vast2EnsemblGene, " not found")
 }
-if (!(opt$depth %in% c("LOW","VLOW")))           {stop("--depth must be LOW|VLOW")}
+if (!(opt$minRepFrac > 0 & opt$minRepFrac <= 1))      {stop("--minRepFrac must be in ]0, 1]")}
+if (!(opt$filter %in% c("DEFAULT","STRICT","LEGACY))) {stop("--filter must be DEFAULT|STRICT|LEGACY")}
 
 if (!opt$continue) {
     vastMain <- sort(dir(opt$vastDir, pattern="INCLUSION_LEVELS_FULL-[[:alnum:]]{4,6}(-[[:alnum:]]{3,4})?.tab.*",
                          full.names=T),
                      decreasing=T)[1]
-    if (is.na(vastMain)) {stop("vast-tools main table not found in ", opt$vastDir)}
+    if (is.na(vastMain)) {stop("vast-tools main table not found in ", vastDir)}
 } else {
     vastMain <- sort(dir(opt$outDir, pattern="INCLUSION_LEVELS_FULL-[[:alnum:]]{4,6}(-[[:alnum:]]{3,4})?_clean.*.tab.*",
                          full.names=T),
@@ -704,20 +718,29 @@ if (!opt$continue) {
 ## Qual score filtering
     cat("Quality filtering...\n")
 
-    if (opt$depth == "LOW") {
-        covThresCE    <- c("SOK","OK","LOW")
-       	covThresOther <- c("SOK","OK","LOW")
-        covThresIR    <- 15
-    }
-    if (opt$depth == "VLOW") {
+    if (opt$filter == "DEFAULT") {
         covThresCE    <- c("SOK","OK","LOW","VLOW")
        	covThresOther <- c("SOK","OK","LOW","VLOW")
         covThresIR    <- 10
+	balThresCE    <- c("OK","B1","B2","Bl","Bn")
+    }
+    if (opt$filter == "STRICT") {
+        covThresCE    <- c("SOK","OK","LOW")
+       	covThresOther <- c("SOK","OK","LOW")
+        covThresIR    <- 15
+	balThresCE    <- c("OK","B1","B2","Bl","Bn")
+    }
+    if (opt$filter == "LEGACY") {
+        covThresCE    <- c("SOK","OK","LOW")
+       	covThresOther <- c("SOK","OK","LOW")
+        covThresIR    <- 15
+	balThresCE    <- c("OK","B1")
     }
 
     for (i in seq(8, ncol(vast), 2)) { # for all quality columns...
         vast[,i - 1] <- ifelse(cleanAS(vast[,i], 
                                        covThresCE=covThresCE, covThresOther=covThresOther, covThresIR=covThresIR,
+				       balThresCE=balThresCE,
                                        complexCol=vast$COMPLEX), vast[,i-1], NA)
     }
     gz1 <- gzfile(file.path(opt$outDir, paste0(sub("\\.tab(\\.gz)?", "_clean", basename(vastMain)),
@@ -734,7 +757,8 @@ if (!opt$continue) {
     names(diffres) <- contrTab$Contrast
     diffres <- mclapply(diffres, FUN=mergeToVast, events=vast$EVENT, mc.cores=opt$cores)
     
-    means <- sapply(uqContr, diffPointEst, contrTab=contrTab, diffres=diffres, sampleTab=sampleTab, vast=vast)
+    means <- sapply(uqContr, diffPointEst, 
+       minFrac=opt$minRepFrac, contrTab=contrTab, diffres=diffres, sampleTab=sampleTab, vast=vast)
     cat("\n")
     rownames(means) <- vast$EVENT
     
@@ -850,17 +874,17 @@ if (!opt$continue) {
 rowCol <- setRowCol(ncol(dpsi))
 
 pdf(file.path(opt$outDir, "ChangingEvents.dPSI.15_bars.pdf"),
-    wid=1.8 + rowCol[2] * 3, hei=1.6 + rowCol[1] * 2.8)
+    wid=1.8 + rowCol[2] * 2.9, hei=1.6 + rowCol[1] * 2.7)
 changingEventTypes(dpsi=dpsi, sig=diff15, info=info, includeANN=T, main=contrTab$Contrast)
 dev.off()
 
 pdf(file.path(opt$outDir, "ChangingEvents.dPSI.10_bars.pdf"),
-    wid=1.8 + rowCol[2] * 3, hei=1.6 + rowCol[1] * 2.8)
+    wid=1.8 + rowCol[2] * 2.9, hei=1.6 + rowCol[1] * 2.7)
 changingEventTypes(dpsi=dpsi, sig=diff10, info=info, includeANN=T, main=contrTab$Contrast)
 dev.off()
 
 pdf(file.path(opt$outDir, "ChangingEvents.dPSI.05_bars.pdf"),
-    wid=1.8 + rowCol[2] * 3, hei=1.6 + rowCol[1] * 2.8)
+    wid=1.8 + rowCol[2] * 2.9, hei=1.6 + rowCol[1] * 2.7)
 changingEventTypes(dpsi=dpsi, sig=diff05, info=info, includeANN=T, main=contrTab$Contrast)
 dev.off()
 
@@ -1007,7 +1031,7 @@ if (nrow(contrTab) > 1 & (nrow(contrTab) <= maxPlotContr | opt$scatterForce)) {
 if (!is.null(opt$specEventTable)) {
     specEv <- read.delim(opt$specEventTable)
     if (!("EVENT" %in% names(specEv))) {stop("Specific event table is lacking column 'EVENT'")}
-    if (length(which(as.character(specEv$EVENT) %in% sub("-[0-9]+/[0-9]+", "", info$EVENT))) / nrow(specEv) < 0.5) {
+    if (length(which(specEv$EVENT %in% sub("-[0-9]+/[0-9]+", "", info$EVENT))) / nrow(specEv) < 0.5) {
         stop("Less than half of the events in ", opt$specEventTable, " found in vast-tools results")
     }
 
@@ -1036,6 +1060,5 @@ if (!opt$noGO) {
 write.table(paste("Completed", strftime(Sys.time())),
             row.names=F, col.names=F, quote=F, sep='\t',
             file=logName, append=T)
-
 
 
