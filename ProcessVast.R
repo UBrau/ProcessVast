@@ -1031,7 +1031,7 @@ if (nrow(contrTab) > 1 & (nrow(contrTab) <= maxPlotContr | opt$scatterForce)) {
 if (!is.null(opt$specEventTable)) {
     specEv <- read.delim(opt$specEventTable)
     if (!("EVENT" %in% names(specEv))) {stop("Specific event table is lacking column 'EVENT'")}
-    if (length(which(specEv$EVENT %in% sub("-[0-9]+/[0-9]+", "", info$EVENT))) / nrow(specEv) < 0.5) {
+    if (length(which(as.character(specEv$EVENT) %in% sub("-[0-9]+/[0-9]+", "", info$EVENT))) / nrow(specEv) < 0.5) {
         stop("Less than half of the events in ", opt$specEventTable, " found in vast-tools results")
     }
 
