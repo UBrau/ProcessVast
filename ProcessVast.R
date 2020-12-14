@@ -617,7 +617,7 @@ if (!opt$noGO && !file.exists(opt$vast2EnsemblGene))   {
     stop(opt$vast2EnsemblGene, " not found")
 }
 if (!(opt$minRepFrac > 0 & opt$minRepFrac <= 1))      {stop("--minRepFrac must be in ]0, 1]")}
-if (!(opt$filter %in% c("DEFAULT","STRICT","LEGACY))) {stop("--filter must be DEFAULT|STRICT|LEGACY")}
+if (!(opt$filter %in% c("DEFAULT","STRICT","LEGACY"))) {stop("--filter must be DEFAULT|STRICT|LEGACY")}
 
 if (!opt$continue) {
     vastMain <- sort(dir(opt$vastDir, pattern="INCLUSION_LEVELS_FULL-[[:alnum:]]{4,6}(-[[:alnum:]]{3,4})?.tab.*",
