@@ -228,27 +228,31 @@ altCombinePSI <- function(vast, dat) {
     info <- data.frame(vast[,1:6], vastInd=1:nrow(vast))[order(vast$EVENT),]
     dat  <- as.matrix(dat[info$vastInd,])
     info$EVENT <- sub("(.+ALT[AD][0-9]+)-.*", "\\1", info$EVENT)
-    
-    dat.a5 <- dat[info$COMPLEX == "Alt5",]
-    info.a5 <- info[info$COMPLEX == "Alt5",]
-    posInd.a5 <- altIndex(dat.a5, uniqEvent=info.a5$EVENT, aggreg="altInd")
-    info.a5 <- info.a5[nrow(info.a5):1,]
-    info.a5 <- info.a5[!duplicated(info.a5$EVENT),]
-    info.a5 <- info.a5[!is.na(info.a5$EVENT),]
-    info.a5 <- info.a5[nrow(info.a5):1, 1:6]
 
-    dat.a3 <- dat[info$COMPLEX == "Alt3",]
-    info.a3 <- info[info$COMPLEX == "Alt3",]
-    posInd.a3 <- altIndex(dat.a3, uniqEvent=info.a3$EVENT, aggreg="altInd")
-    info.a3 <- info.a3[nrow(info.a3):1,]
-    info.a3 <- info.a3[!duplicated(info.a3$EVENT),]
-    info.a3 <- info.a3[!is.na(info.a3$EVENT),]
-    info.a3 <- info.a3[nrow(info.a3):1, 1:6]
-
-    out <- rbind(data.frame(info[,-7], dat)[!(info$COMPLEX %in% c("Alt5","Alt3")),],
-                 data.frame(info.a5, posInd.a5[,-1]),
-                 data.frame(info.a3, posInd.a3[,-1])
-                 )
+    if (all(c("Alt5","Alt3") %in% info$COMPLEX)) {
+        dat.a5 <- dat[info$COMPLEX == "Alt5",]
+        info.a5 <- info[info$COMPLEX == "Alt5",]
+        posInd.a5 <- altIndex(dat.a5, uniqEvent=info.a5$EVENT, aggreg="altInd")
+        info.a5 <- info.a5[nrow(info.a5):1,]
+        info.a5 <- info.a5[!duplicated(info.a5$EVENT),]
+        info.a5 <- info.a5[!is.na(info.a5$EVENT),]
+        info.a5 <- info.a5[nrow(info.a5):1, 1:6]
+        
+        dat.a3 <- dat[info$COMPLEX == "Alt3",]
+        info.a3 <- info[info$COMPLEX == "Alt3",]
+        posInd.a3 <- altIndex(dat.a3, uniqEvent=info.a3$EVENT, aggreg="altInd")
+        info.a3 <- info.a3[nrow(info.a3):1,]
+        info.a3 <- info.a3[!duplicated(info.a3$EVENT),]
+        info.a3 <- info.a3[!is.na(info.a3$EVENT),]
+        info.a3 <- info.a3[nrow(info.a3):1, 1:6]
+        
+        out <- rbind(data.frame(info[,-7], dat)[!(info$COMPLEX %in% c("Alt5","Alt3")),],
+                     data.frame(info.a5, posInd.a5[,-1]),
+                     data.frame(info.a3, posInd.a3[,-1])
+                     )
+    } else {
+        out <- data.frame(info[,-7], dat)[!(info$COMPLEX %in% c("Alt5","Alt3")),]
+    }
 
     type <- character(nrow(out))
     type[out$COMPLEX %in% c("C1","C2","C3","S","ANN")] <- "CE"
@@ -260,7 +264,6 @@ altCombinePSI <- function(vast, dat) {
     type[is.na(out$COMPLEX) & grepl("EX[0-9]+", out$EVENT) & out$LENGTH <= 27] <- "MIC" #
     type[type == "" & grepl("A_", out$COMPLEX)] <- "CE"
     type[type == "CE" & out$LENGTH <= 27]  <- "MIC"
-
     
     data.frame(out[,1:6],
                TYPE = type,
@@ -274,20 +277,25 @@ altCombine.sig <- function(vast, diffsig) {
     dat <- as.matrix(diffsig[info$vastInd,])
     info$EVENT <- sub("(.+ALT[AD][0-9]+)-.*", "\\1", info$EVENT)
 
-    dat.a5 <- as.matrix(dat[info$COMPLEX == "Alt5",])
-    info.a5 <- info[info$COMPLEX == "Alt5",]
-    anySig.a5 <- altIndex(dat.a5, uniqEvent=info.a5$EVENT, aggreg="max")
-    rownames(anySig.a5) <- anySig.a5[,1]
-
-    dat.a3 <- as.matrix(dat[info$COMPLEX == "Alt3",])
-    info.a3 <- info[info$COMPLEX == "Alt3",]
-    anySig.a3 <- altIndex(dat.a3, uniqEvent=info.a3$EVENT, aggreg="max")
-    rownames(anySig.a3) <- anySig.a3[,1]
-
-    rbind(as.matrix(dat[!(info$COMPLEX %in% c("Alt5","Alt3")),]),
-          as.matrix(anySig.a5[,-1]),
-          as.matrix(anySig.a3[,-1])
-	    ) 
+    if (all(c("Alt5","Alt3") %in% info$COMPLEX)) {
+        dat.a5 <- as.matrix(dat[info$COMPLEX == "Alt5",])
+        info.a5 <- info[info$COMPLEX == "Alt5",]
+        anySig.a5 <- altIndex(dat.a5, uniqEvent=info.a5$EVENT, aggreg="max")
+        rownames(anySig.a5) <- anySig.a5[,1]
+        
+        dat.a3 <- as.matrix(dat[info$COMPLEX == "Alt3",])
+        info.a3 <- info[info$COMPLEX == "Alt3",]
+        anySig.a3 <- altIndex(dat.a3, uniqEvent=info.a3$EVENT, aggreg="max")
+        rownames(anySig.a3) <- anySig.a3[,1]
+        
+        out <- rbind(as.matrix(dat[!(info$COMPLEX %in% c("Alt5","Alt3")),]),
+                     as.matrix(anySig.a5[,-1]),
+                     as.matrix(anySig.a3[,-1])
+                     )
+    } else {
+        out <- as.matrix(dat[!(info$COMPLEX %in% c("Alt5","Alt3")),])
+    }
+    out
 }
 
 altIndex <- function(dat, uniqEvent, aggreg=c("altInd","max","any")[1]) {
@@ -785,7 +793,7 @@ if (!opt$continue) {
 
     means.shr <- altCombinePSI(vast=vast, dat=means)
     diffsig.shr <- altCombine.sig(vast=vast, diffsig=diffsig)
-    
+        
     reorder <- orderEvents(info=means.shr[,1:7])
     info    <- means.shr[reorder, 1:7]
     means   <- as.matrix(means.shr[reorder, 8:ncol(means.shr)])
@@ -926,7 +934,7 @@ if (ncol(dpsi) > 1) {
                     apply(dpsi, MAR=1, FUN=function(x) {length(which(is.na(x)))}) < 1/4 * nrow(sampleTab))
 
     pdf(file.path(opt$outDir, "dPSI.cluster.corr.pdf"),
-        wid=5 + 0.1 * nrow(contrTab), hei=5 + 0.1 * nrow(contrTab))
+        wid=6 + 0.1 * nrow(contrTab), hei=6 + 0.1 * nrow(contrTab))
     cors <- cor(dpsi[change,], use="p")
     heatmap.2(cors, trace="n", col=ifelse(min(cors) < 0, cm.colors, heat.colors), na.col="grey90", margins=c(16,16),
               cex.main=0.4, main="Correlation of dPSI\n(changing events with dPSI >= 10 only)",
@@ -1060,5 +1068,4 @@ if (!opt$noGO) {
 write.table(paste("Completed", strftime(Sys.time())),
             row.names=F, col.names=F, quote=F, sep='\t',
             file=logName, append=T)
-
 
