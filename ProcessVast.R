@@ -674,7 +674,7 @@ cols <- strsplit(opt$colors, split=",")[[1]]
 if (!all(cols %in% colors())) {
     stop("Color(s) not defined: ", paste(cols[!(cols %in% colors())], collapse=", "))
 }
-if (length(uqContr) > length(cols)) {cols <- rep(cols, length(uqContr) %/% length(cols) + 1)}
+if (length(uqContr) > length(cols)) {cols <- rep(cols, length(uqContr) %/% length(cols) + 1)[1:length(uqContr)]}
 sampleTab$col <- sapply(sampleTab$Type, FUN=function(x) {cols[which(uqContr == x)]})
 
 
