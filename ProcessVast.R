@@ -675,7 +675,11 @@ if (!all(cols %in% colors())) {
     stop("Color(s) not defined: ", paste(cols[!(cols %in% colors())], collapse=", "))
 }
 if (length(uqContr) > length(cols)) {cols <- rep(cols, length(uqContr) %/% length(cols) + 1)[1:length(uqContr)]}
-sampleTab$col <- sapply(sampleTab$Type, FUN=function(x) {cols[which(uqContr == x)]})
+sampleTab$col <- sapply(sampleTab$Type, FUN=function(x) {
+    out <- cols[which(uqContr == x)]
+    if (length(out) == 0) {out <- "black"}
+    out
+})
 
 
 ## Read data
@@ -1068,4 +1072,3 @@ if (!opt$noGO) {
 write.table(paste("Completed", strftime(Sys.time())),
             row.names=F, col.names=F, quote=F, sep='\t',
             file=logName, append=T)
-
