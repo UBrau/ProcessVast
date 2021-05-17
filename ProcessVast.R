@@ -684,7 +684,7 @@ sampleTab$col <- sapply(sampleTab$Type, FUN=function(x) {
 
 ## Read data
 cat("Reading ", basename(vastMain), "...\n", sep="")
-vast <- read.delim(vastMain)
+vast <- read.delim(vastMain, check.names=F)
 if (any(duplicated(vast$EVENT))) {
     vast <- removeVastDupEvents(vast)
 }
