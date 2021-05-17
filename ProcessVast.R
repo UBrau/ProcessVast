@@ -628,12 +628,12 @@ if (!(opt$minRepFrac > 0 & opt$minRepFrac <= 1))      {stop("--minRepFrac must b
 if (!(opt$filter %in% c("DEFAULT","STRICT","LEGACY"))) {stop("--filter must be DEFAULT|STRICT|LEGACY")}
 
 if (!opt$continue) {
-    vastMain <- sort(dir(opt$vastDir, pattern="INCLUSION_LEVELS_FULL-[[:alnum:]]{4,6}(-[[:alnum:]]{3,4})?.tab.*",
+    vastMain <- sort(dir(opt$vastDir, pattern="INCLUSION_LEVELS_FULL-[[:alnum:]]{4,6}(-[[:alnum:]]{1,4})?.tab.*",
                          full.names=T),
                      decreasing=T)[1]
     if (is.na(vastMain)) {stop("vast-tools main table not found in ", opt$vastDir)}
 } else {
-    vastMain <- sort(dir(opt$outDir, pattern="INCLUSION_LEVELS_FULL-[[:alnum:]]{4,6}(-[[:alnum:]]{3,4})?_clean.*.tab.*",
+    vastMain <- sort(dir(opt$outDir, pattern="INCLUSION_LEVELS_FULL-[[:alnum:]]{4,6}(-[[:alnum:]]{1,4})?_clean.*.tab.*",
                          full.names=T),
                      decreasing=T)[1]
     if (length(vastMain) != 1) {
