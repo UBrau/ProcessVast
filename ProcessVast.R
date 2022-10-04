@@ -685,6 +685,7 @@ sampleTab$col <- sapply(sampleTab$Type, FUN=function(x) {
 ## Read data
 cat("Reading ", basename(vastMain), "...\n", sep="")
 vast <- read.delim(vastMain, check.names=F)
+print(names(vast))
 if (any(duplicated(vast$EVENT))) {
     vast <- removeVastDupEvents(vast)
 }
@@ -935,7 +936,8 @@ dev.off()
 ## Clustering of differential events
 if (ncol(dpsi) > 1) {
     change <- which(apply(diff10, MAR=1, FUN=function(x) {any(x)}) &
-                    apply(dpsi, MAR=1, FUN=function(x) {length(which(is.na(x)))}) < 1/4 * nrow(sampleTab))
+                    rowSums(is.na(dpsi)) < 1/4 * ncol(dpsi)
+    )
 
     pdf(file.path(opt$outDir, "dPSI.cluster.corr.pdf"),
         wid=6 + 0.1 * nrow(contrTab), hei=6 + 0.1 * nrow(contrTab))
@@ -1028,7 +1030,7 @@ if (ncol(dpsi) > 1 & exists("clustEvent")) {
 
 ## Scatter plots
 if (nrow(contrTab) > 1 & (nrow(contrTab) <= maxPlotContr | opt$scatterForce)) {
-    pdf(file.path(opt$outDir, "dPSI.scatter.pdf"), wid=16.5, hei=3.7)
+    x
     for (i in 1:(nrow(contrTab) - 1)) {
         for (j in 2:nrow(contrTab)) {
             if (i >= j) next
