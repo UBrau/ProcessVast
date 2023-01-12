@@ -184,7 +184,7 @@ reshapeVast <- function(vast) {
     tmp <- matrix(nrow=nrow(vast), ncol=(ncol(vast) - 6) * 2)
     colnames(tmp) <- paste0(rep(names(vast)[-c(1:6)], each=2), c("","-Q"))
     tmp[,seq(1, ncol(tmp) - 1, 2)] <- as.matrix(vast[,7:ncol(vast)])
-    data.frame(vast[,1:6], tmp)
+    data.frame(vast[,1:6], tmp, check.names=F)
 }
 
 mergeToVast <- function(x, events) {
@@ -1030,7 +1030,7 @@ if (ncol(dpsi) > 1 & exists("clustEvent")) {
 
 ## Scatter plots
 if (nrow(contrTab) > 1 & (nrow(contrTab) <= maxPlotContr | opt$scatterForce)) {
-    x
+    pdf(file.path(opt$outDir, "dPSI.scatter.pdf"), wid=16.5, hei=3.7)
     for (i in 1:(nrow(contrTab) - 1)) {
         for (j in 2:nrow(contrTab)) {
             if (i >= j) next
