@@ -998,7 +998,7 @@ if (ncol(dpsi) > 1) {
 
 ## Clustering of each event type separately by euclidian distance
 if (ncol(dpsi) > 1 & exists("clustEvent")) {
-    pdf(file.path(opt$outDir, "AS.cluster_types_dPSI10.pdf"),
+    pdf(file.path(opt$outDir, "AS.cluster_types_dPSI.10.pdf"),
          wid=3.5 + 0.1 * nrow(contrTab), hei=11)
     for (i in unique(info$TYPE)) 
         try({
