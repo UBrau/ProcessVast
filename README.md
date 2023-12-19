@@ -54,6 +54,7 @@ Ulrich Braunschweig, University of Toronto
 [email](mailto:u.braunschweig@utoronto.ca)
 
 ## Reference
-If using in published work, please cite the DOI of the release.
+If using in published work, please cite the DOI of the release. The latest one is:
+[![DOI](https://zenodo.org/badge/267636603.svg)](https://zenodo.org/badge/latestdoi/267636603)
   
 
