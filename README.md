@@ -46,7 +46,14 @@ Differential events are those that have have the specified absolute dPSI/dPIR (5
 
 - **Log file** (vastResultsProcessing.log)
 
+## Author
+Please let me know if you have questions or encounter errors by emailing or raising an issue.
 
-  
+Ulrich Braunschweig, University of Toronto
+
+[email](mailto:u.braunschweig@utoronto.ca)
+
+## Reference
+If using in published work, please cite the DOI of the release.
   
 
