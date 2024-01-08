@@ -1,11 +1,9 @@
 #!/usr/bin/env Rscript
 ### Work up vast-tools output, save tables and do a few analysis of changing events
 ###
-### U. Braunschweig 2019-2020
+### U. Braunschweig 2019-2024
 ###
-### Changes:  Option 'depth' has been replaced with 'filter', with the default settings now allowing
-###           a quality score of OK/LOW/VLOW for CE/MIC depth and OK/B1/B2/Bl/Bn for balance, 
-###           and IR minimum reads of 10. This rescues ~10-20% of events compared to the previous default.
+### Changes:  New option --vastMain
 
 cArgs <- commandArgs(TRUE)
 
@@ -24,8 +22,10 @@ opt.list <- list(
                 help="Optional table indicating specific events to be used for an analysis of changing
                 events. Required are a colsumn EVENTS and one or more other columns containing a string
                 annotation such as 'neural-HIGH', 'neural-LOW' etc."),
-    make_option(c("-v", "--vastDir"),       action="store", default="./vast", metavar="DIR",
+    make_option(c("-v", "--vastDir"),       action="store", default="./vast",      metavar="DIR",
                 help="Directory with vast-tools output [%default]"),
+    make_option(c("-I", "--vastMain"),      action="store", type="character",      metavar="PATH",
+                help="vast-tools main INCLUSION... table [default: ProcessVast will attempt to find the table]"),
     make_option(c("-o", "--outDir"),        action="store", default="./splicing", metavar="DIR",
                 help="Output directory. Will be created if it does not exist [%default]"),
     make_option("--continue",               action="store_true", default="FALSE",
@@ -59,7 +59,7 @@ opt.list <- list(
                 help="By default, if there are > 9 contrasts, mutual pairwise scatterplots of dPSI by event
                 type are suppressed. Set this flag to force plotting."),
     make_option("--colors",                 action="store",
-                default="dodgerblue,grey50,darkmagenta,darkorange1,darkolivegreen2,darkslategray4,burlywood3,cyan3,darkgoldenrod3,firebrick3,navy,seagreen4",
+                default="dodgerblue,grey50,darkmagenta,darkorange1,darkolivegreen2,darkslategray4,burlywood3,cyan3,darkgoldenrod3,firebrick3,navy,seagreen4,darkgoldenrod1,burlywood1,grey80,deeppink,mediumpurple1,yellow2",
                 metavar="NUM",
                 help="Colors per sample type for plotting [%default]"),   
     make_option(c("-C", "--cores"),         action="store", default=1, metavar="INT",
@@ -67,7 +67,8 @@ opt.list <- list(
 )
 
 opt <- parse_args(OptionParser(
-    usage = "Filter vast-tools results, average replicates, generate tables, analyze differential events",
+    usage = "Filter vast-tools results, average replicates, generate tables, analyze differential events
+             ProcessVast -s <SampleTable> -c <ContrastTable> [OPTIONS]",
     option_list=opt.list),
     args=cArgs)
 
@@ -628,11 +629,19 @@ if (!(opt$minRepFrac > 0 & opt$minRepFrac <= 1))      {stop("--minRepFrac must b
 if (!(opt$filter %in% c("DEFAULT","STRICT","LEGACY"))) {stop("--filter must be DEFAULT|STRICT|LEGACY")}
 
 if (!opt$continue) {
-    vastMain <- sort(dir(opt$vastDir, pattern="INCLUSION_LEVELS_FULL-[[:alnum:]]{4,6}(-[[:alnum:]]{1,4})?.tab.*",
-                         full.names=T),
-                     decreasing=T)[1]
-    if (is.na(vastMain)) {stop("vast-tools main table not found in ", opt$vastDir)}
+    if (is.null(opt$vastMain)) {
+        vastMain <- sort(dir(opt$vastDir, pattern="INCLUSION_LEVELS_FULL-[[:alnum:]]{4,6}(-[[:alnum:]]{1,4})?.tab.*",
+                             full.names=T),
+                         decreasing=T)[1]
+        if (is.na(vastMain)) {stop("vast-tools main table not found in ", opt$vastDir)}
+    } else {
+        vastMain <- opt$vastMain
+        if (!file.exists(vastMain)) {stop("vast-tools main table ", opt$vastMain, " not found")}
+    }        
 } else {
+    if (!is.null(opt$vastMain)) {
+        stop("Flag --continue is set but --vastMain is also provided")
+    }
     vastMain <- sort(dir(opt$outDir, pattern="INCLUSION_LEVELS_FULL-[[:alnum:]]{4,6}(-[[:alnum:]]{1,4})?_clean.*.tab.*",
                          full.names=T),
                      decreasing=T)[1]
