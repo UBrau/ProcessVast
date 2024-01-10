@@ -61,13 +61,15 @@ opt.list <- list(
     make_option("--colors",                 action="store",
                 default="dodgerblue,grey50,darkmagenta,darkorange1,darkolivegreen2,darkslategray4,burlywood3,cyan3,darkgoldenrod3,firebrick3,navy,seagreen4,darkgoldenrod1,burlywood1,grey80,deeppink,mediumpurple1,yellow2",
                 metavar="NUM",
-                help="Colors per sample type for plotting [%default]"),   
+                help="Colors per sample type for plotting. Sample of type 'Other' automatically gets color 'grey80'
+                unless this is taken [%default]"),   
     make_option(c("-C", "--cores"),         action="store", default=1, metavar="INT",
                 help="CPUs to use [%default]")
 )
 
 opt <- parse_args(OptionParser(
-    usage = "Filter vast-tools results, average replicates, generate tables, analyze differential events
+    usage = "Filter vast-tools results, average replicates, generate tables, analyze differential events.
+
              ProcessVast -s <SampleTable> -c <ContrastTable> [OPTIONS]",
     option_list=opt.list),
     args=cArgs)
@@ -689,6 +691,9 @@ sampleTab$col <- sapply(sampleTab$Type, FUN=function(x) {
     if (length(out) == 0) {out <- "black"}
     out
 })
+if (!("grey80" %in% sampleTab$col)) {
+   sampleTab$col[tolower(sampleTab$Type) == "other"] <- "grey80"
+}
 
 
 ## Read data
@@ -938,7 +943,8 @@ ylim <- range(mds[,2]) + c(-0.08,0.08) * (max(mds[,2]) - min(mds[,2]))
 pdf(file.path(opt$outDir, "MDS_samplePSI.pdf"), wid=5.5, hei=6)
 plot(mds[,c(1,2)], pch=20, col=sampleTab$col, xlim=xlim, ylim=ylim,
      main="Multi-dimensional scaling", xlab="DIM 1", ylab="DIM 2")
-text(mds[,c(1,2)], labels=sub("\\.R1$", "", rownames(mds)), cex=0.7, pos=1, col=sampleTab$col)
+text(mds[,c(1,2)], labels=sub("\\.R1$", "", rownames(mds)), 
+    cex=ifelse(nrow(sampleTab) > 12, 0.6, 0.8), pos=1, col=sampleTab$col)
 dev.off()
 
 
